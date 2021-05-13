@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh">
+	<head>
+		<meta charset="UTF-8">
+		<title>网吧计费管理系统</title>
+		<link href="https://cdn.bootcss.com/twitter-bootstrap/3.4.1/css/bootstrap.min.css" rel="stylesheet">
+		<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+		<script src="https://cdn.bootcss.com/twitter-bootstrap/3.4.1/js/bootstrap.min.js"></script>
+		<script src="https://cdn.bootcss.com/vue/2.6.11/vue.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/http-vue-loader@1.4.2/src/httpVueLoader.min.js"></script>
+		<script src="./conf.js"></script>
+	</head>
+	<body>
+		<div id="app">
+			<div v-if="isLogged">
+				<!-- navigation -->
+				<div class="app-header">
+					<nav class="navbar navbar-default navbar-inverse" role="navigation">
+						<div class="container-fluid">
+							<div class="navbar-header">
+								<a href="#" class="navbar-brand" @click="handleChangeView('customer_main_view')">网吧计费管理系统</a>
+							</div>
+							<div class="collapse navbar-collapse navbar-left" id="example-navbar-collapse">
+								<ul class="nav navbar-nav">
+									<li><a href="#" @click="handleChangeView('reward_points')">积分兑换</a></li>
+									<li><a href="#" @click="handleChangeView('buy_goods')">购买商品</a></li>
+								</ul>
+							</div>
+							<ul class="nav navbar-nav navbar-right">
+								<li>
+									<a href="#" @click="logOut()">
+										注销
+									</a>
+								</li>
+							</ul>
+						</div>
+					</nav>
+				</div>
+				<!-- main container -->
+				<div id="main-container" class="container-fluid">
+					<component :is="main_view" style="width: 100%;"></component>
+				</div>
+			</div>
+			<div v-else>
+				<div class="jumbotron" style="height: 100%;">
+					<form class="form-horizontal" role="form" @submit.prevent="login">
+						<div class="form-group">
+							<div class="col-sm-offset-2 col-sm-10">
+								<h1>用户登录</h1>
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="userID" class="col-sm-2 control-label">身份证号</label>
+							<div class="col-sm-8">
+								<input type="text" class="form-control" v-model="logInfo.username" placeholder="请输入身份证号(用户名)">
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="pwd" class="col-sm-2 control-label">密码</label>
+							<div class="col-sm-8">
+								<input type="password" class="form-control" v-model="logInfo.password" placeholder="请输入密码(默认为身份证号)">
+							</div>
+						</div>
+						<div class="form-group">
+							<div class="col-sm-offset-2 col-sm-10">
+								<button type="submit" class="btn btn-success btn-lg">登录</button>
+							</div>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</body>
+
+	<script>
+		let vm = new Vue({
+			el: '#app',
+			components: {
+				'customer_main_view': httpVueLoader('CustomerMain.vue'),
+				'reward_points': httpVueLoader('RewardPoints.vue'),
+				'buy_goods': httpVueLoader('BuyGoods.vue'),
+			},
+			data: {
+				main_view: 'customer_main_view',
+				isLogged: localStorage.getItem('user-x-auth-token') !== null,
+				logInfo: {
+					username: '',
+					password: '',
+					permission: 2
+				},
+			},
+			watch: {
+				toWatch: function(val) {
+
+				},
+			},
+			mounted() {
+
+			},
+			methods: {
+				//切换组件用
+				handleChangeView: function(componentName) {
+					this.main_view = componentName;
+				},
+				login: function() {
+					if (this.logInfo.username.trim() === "" || this.logInfo.username.trim() === null || this.logInfo.username.trim() ===
+						undefined) {
+						alert("请输入身份证号！");
+						return false;
+					}
+					if (this.logInfo.password.trim() === "" || this.logInfo.password.trim() === null || this.logInfo.password.trim() ===
+						undefined) {
+						alert("请输入密码！");
+						return false;
+					}
+					localStorage.clear();
+					$.ajax({
+						url: conf.ur + "/loginByUser",
+						type: 'post',
+						dataType: 'json',
+						data: JSON.stringify({
+							"username": this.logInfo.username.trim(),
+							"password": this.logInfo.password.trim()
+						}),
+						headers: {
+							"Content-Type": "application/json"
+						},
+						success: (data) => {
+							console.log(JSON.stringify(data))
+							if (data.statusCodeValue === 200) {
+								let sysUser = data.sysUser;
+								conf.storage.setItem('user-x-auth-token', sysUser.token);
+								conf.storage.setItem('customerUser', JSON.stringify(sysUser));
+								window.location.reload();
+							} else alert("用户名或密码错误！");
+						},
+						error: (err) => {
+							console.log("网络异常！")
+						}
+					});
+					return false;
+				},
+				logOut: function(){
+					conf.storage.removeItem('user-x-auth-token');
+					conf.storage.removeItem('customerUser');
+					window.location.reload();
+				}
+			}
+		})
+	</script>
+
+	<style>
+		html,
+		body {
+			height: 100%;
+			margin: 0px;
+			padding: 0px;
+		}
+
+		#app {
+			background-color: ghostwhite;
+			height: 100%;
+		}
+
+		.app-header {
+			background-color: #85d989;
+			width: 100%;
+			height: 50px;
+		}
+
+		#main-container {
+			background-color: ghostwhite;
+			width: 100%;
+			position: absolute;
+			top: 50px;
+			bottom: 0px;
+			left: 0px;
+		}
+
+		.jumbotron {
+			background-color: ghostwhite;
+		}
+	</style>
+</html>
