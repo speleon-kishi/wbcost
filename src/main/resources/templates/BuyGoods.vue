@@ -146,6 +146,8 @@
 								// localStorage.setItem("totalCosts", totalCosts + goods.price);
 								alert("购买成功！");
 								// window.location.reload();
+								item.num=0;
+								item.totalprice=0;
 							} else {
 								alert("购买失败！")
 								window.location.reload();

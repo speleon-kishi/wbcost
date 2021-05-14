@@ -123,7 +123,7 @@ public class PublicController {
     public R buyGoods(@RequestBody BuyGoodsReq buyGoodsReq) {
         SysUser sysUser = sysUserService.getById(buyGoodsReq.getUid());
         if (sysUser != null) {
-            sysUser.setBuyGoodsCost(sysUser.getBuyGoodsCost() + buyGoodsReq.getPrice());
+            sysUser.setBuyGoodsCost(sysUser.getBuyGoodsCost() + buyGoodsReq.getTotalprice());
             sysUserService.updateById(sysUser);
             return R.ok("购买成功！");
         } else return R.failed("购买失败！");
